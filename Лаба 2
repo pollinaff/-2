@@ -1,0 +1,42 @@
+# Написать программу, которая читая символы из обыкновенной последовательности (эмулируется конечным файлом, читающимся поблочно),
+# распознает, преобразует и выводит на экран лексемы по определенному правилу. Лексемы разделены пробелами.
+# Преобразование делать по возможности через словарь.
+# Для упрощения под выводом числа прописью подразумевается последовательный вывод всех цифр числа.
+# Вариант 28.
+# Шеснадцатиричные числа, у которых 3 справа цифры равна А16 расположенные в порядке убывания.
+# Для каждой такой последовательности максимальное число вывести прописью.
+
+import re
+
+def hex_to_words(hex_str):
+    hex_dict = {
+    '0': 'ноль', '1': 'один', '2': 'два', '3': 'три',
+    '4': 'четыре', '5': 'пять', '6': 'шесть', '7': 'семь',
+    '8': 'восемь', '9': 'девять', 'A': 'десять', 'B': 'одиннадцать',
+    'C': 'двенадцать', 'D': 'тринадцать', 'E': 'четырнадцать', 'F': 'пятнадцать'
+    }
+    return ' '.join(hex_dict[digit] for digit in hex_str)
+
+def is_valid_hex(hex_str):
+    if len(hex_str) < 3 or hex_str[-3] != 'A':
+        return False
+    return all(hex_str[i] >= hex_str[i + 1] for i in range(len(hex_str) - 1))
+
+def find_max_hex_in_file(file_path):
+    max_hex = '0'
+    with open(file_path, 'r') as file:
+        for block in iter(lambda: file.read(1024), ''):
+            words = re.findall(r'\b0x\w+\b|\b\w*[Aa]\w*\b', block)
+            for word in words:
+                hex_number = word[2:] if word.startswith('0x') else word
+                if is_valid_hex(hex_number) and int(hex_number, 16) > int(max_hex, 16):
+                    max_hex = hex_number
+                    return max_hex
+
+file_path = 'input.txt'
+max_hex = find_max_hex_in_file(file_path)
+if max_hex != '0':
+    print(f"Максимальное шестнадцатеричное число: {max_hex}")
+    print(f"Прописью: {hex_to_words(max_hex)}")
+else:
+    print("Подходящих шестнадцатеричных чисел в файле нет.")
