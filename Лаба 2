@@ -8,35 +8,63 @@
 
 import re
 
+
 def hex_to_words(hex_str):
     hex_dict = {
-    '0': 'ноль', '1': 'один', '2': 'два', '3': 'три',
-    '4': 'четыре', '5': 'пять', '6': 'шесть', '7': 'семь',
-    '8': 'восемь', '9': 'девять', 'A': 'десять', 'B': 'одиннадцать',
-    'C': 'двенадцать', 'D': 'тринадцать', 'E': 'четырнадцать', 'F': 'пятнадцать'
+        '0': 'ноль', '1': 'один', '2': 'два', '3': 'три',
+        '4': 'четыре', '5': 'пять', '6': 'шесть', '7': 'семь',
+        '8': 'восемь', '9': 'девять', 'A': 'десять', 'B': 'одиннадцать',
+        'C': 'двенадцать', 'D': 'тринадцать', 'E': 'четырнадцать', 'F': 'пятнадцать'
     }
     return ' '.join(hex_dict[digit] for digit in hex_str)
 
-def is_valid_hex(hex_str):
-    if len(hex_str) < 3 or hex_str[-3] != 'A':
-        return False
-    return all(hex_str[i] >= hex_str[i + 1] for i in range(len(hex_str) - 1))
+
+def split_sequence_by_order(sequence):
+    if not sequence:
+        return []
+
+    result = []
+    current_sequence = [sequence[0]]
+
+    for i in range(1, len(sequence)):
+        if int(sequence[i], 16) < int(sequence[i - 1], 16):
+            current_sequence.append(sequence[i])
+        else:
+            if len(current_sequence) > 1:
+                result.append(current_sequence)
+            current_sequence = [sequence[i]]
+
+    if len(current_sequence) > 1:
+        result.append(current_sequence)
+    return result
+
 
 def find_max_hex_in_file(file_path):
-    max_hex = '0'
     with open(file_path, 'r') as file:
-        for block in iter(lambda: file.read(1024), ''):
-            words = re.findall(r'\b0x\w+\b|\b\w*[Aa]\w*\b', block)
-            for word in words:
-                hex_number = word[2:] if word.startswith('0x') else word
-                if is_valid_hex(hex_number) and int(hex_number, 16) > int(max_hex, 16):
-                    max_hex = hex_number
-                    return max_hex
+        text = file.read()
+        hex_nums = re.findall(r'[aA]16[A-Fa-f0-9]+', text)
 
-file_path = 'input.txt'
-max_hex = find_max_hex_in_file(file_path)
-if max_hex != '0':
-    print(f"Максимальное шестнадцатеричное число: {max_hex}")
-    print(f"Прописью: {hex_to_words(max_hex)}")
-else:
-    print("Подходящих шестнадцатеричных чисел в файле нет.")
+        if len(hex_nums) == 0:
+            print("Подходящих шестнадцатеричных чисел в файле нет.")
+            return
+
+        # Разделение чисел на последовательности в порядке убывания
+        sequences = split_sequence_by_order(hex_nums)
+
+        # Вывод максимального числа из каждой последовательности
+        for index, sequence in enumerate(sequences):
+            # Максимальное значение будет первым элементом последовательности, т.к она упорядочена по убыванию
+            max_hex = sequence[0]
+            print(index + 1, "последовательность:", *sequence)
+            print(f"Максимальное шестнадцатеричное число: {max_hex}")
+            print(f"Прописью: {hex_to_words(max_hex)}")
+            print()
+
+
+def run():
+    file_path = 'input.txt'
+    find_max_hex_in_file(file_path)
+
+
+run()
+
